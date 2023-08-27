@@ -61,6 +61,7 @@
   
 ## View 환경설정  
 - Welcome Page 만들기
+  ![image](https://github.com/lpromotion/Inflearn_Spring/assets/88132500/90ae9957-1e84-49c6-8b10-29fb9c4f5973)  
   - resources/static/index.html (정적 페이지)
   - 스프링부트가 제공하는 Welcome Page 기능
     - static/index.html 을 올려두면 Welcome Page 기능을 제공함
@@ -85,7 +86,7 @@ html/spring-boot-features.html#boot-features-spring-mvc-template-engines
 ## 빌드하고 실행하기   
 
 콘솔로 이동
-1. ./gradlew build (윈도우 : gradlew.bat)
+1. ./gradlew build  
 2. cd build/libs (빌드할 경우 빌드 폴더가 생성됨)
 3. java -jar hello-spring-0.0.1-SNAPSHOT.jar (build/libs 에 있는 파일)
 4. 실행 확인
