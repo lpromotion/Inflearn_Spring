@@ -1,7 +1,6 @@
 > [스프링 입문 - 코드로 배우는 스프링 부트, 웹 MVC, DB 접근 기술](https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-%EC%9E%85%EB%AC%B8-%EC%8A%A4%ED%94%84%EB%A7%81%EB%B6%80%ED%8A%B8/dashboard)
-<br>
-  
-목차  
+
+#### 목차  
 > [프로젝트 생성](#프로젝트-생성)  
 > [라이브러리 살펴보기](#라이브러리-살펴보기)  
 > [View 환경설정](#View-환경설정)  
@@ -27,6 +26,7 @@
     - 톰켓 웹서버를 내장하고 있기 때문에, 톰켓 자체적으로 띄우면서 스프링부트가 올라옴
       ![image](https://github.com/lpromotion/Inflearn_Spring/assets/88132500/bc5f9f87-275f-471f-ab4c-198f3cacf4d0)
 
+[목차](#목차)  
 <br>  
 
 ## 라이브러리 살펴보기
@@ -53,12 +53,13 @@
     - junit: 테스트 프레임워크  
     - mockito: 목 라이브러리  
     - assertj: 테스트 코드를 좀 더 편하게 작성하게 도와주는 라이브러리  
-    - spring-test: 스프링 통합 테스트 지원  
+    - spring-test: 스프링 통합 테스트 지원
+
+[목차](#목차)  
 
 <br>  
   
 ## View 환경설정  
-
 - Welcome Page 만들기
   - resources/static/index.html (정적 페이지)
   - 스프링부트가 제공하는 Welcome Page 기능
@@ -78,9 +79,10 @@ html/spring-boot-features.html#boot-features-spring-mvc-template-engines
   - `spring-boot-devtools`라이브러리를 추가하면, `html`파일을 컴파일만 해주면 서버 재시작없이 View 파일 변경이 가능함
     - 인텔리제이 컴파일 방법 : 메뉴 build -> Recompile
 
+[목차](#목차) 
 <br>  
 
-## 빌드하고 실행하기  
+## 빌드하고 실행하기   
 
 콘솔로 이동
 1. ./gradlew build (윈도우 : gradlew.bat)
@@ -88,5 +90,6 @@ html/spring-boot-features.html#boot-features-spring-mvc-template-engines
 3. java -jar hello-spring-0.0.1-SNAPSHOT.jar (build/libs 에 있는 파일)
 4. 실행 확인
 
-2에서 ./gradlew clean build 하면 빌드 폴더를 삭제하고 다시 생성
+2에서 ./gradlew clean build 하면 빌드 폴더를 삭제하고 다시 생성  
 
+[목차](#목차) 
