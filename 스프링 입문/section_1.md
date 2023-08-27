@@ -3,7 +3,11 @@
   
 목차  
 > [프로젝트 생성](#프로젝트-생성)  
-> [라이브러리 살펴보기](#라이브러리-살펴보기)
+> [라이브러리 살펴보기](#라이브러리-살펴보기)  
+> [View 환경설정](#View-환경설정)  
+> [빌드하고 실행하기](#빌드하고-실행하기)  
+
+<br>
 
 ## 프로젝트 생성  
 - Spring Intializr
@@ -51,4 +55,38 @@
     - assertj: 테스트 코드를 좀 더 편하게 작성하게 도와주는 라이브러리  
     - spring-test: 스프링 통합 테스트 지원  
 
-    
+<br>  
+  
+## View 환경설정  
+
+- Welcome Page 만들기
+  - resources/static/index.html (정적 페이지)
+  - 스프링부트가 제공하는 Welcome Page 기능
+    - static/index.html 을 올려두면 Welcome Page 기능을 제공함
+  - spring.io > spring boot > spring boot reference documentation
+- thymeleaf 템플릿 엔진
+  - thymeleaf 공식 사이트: https://www.thymeleaf.org/
+  - 스프링 공식 튜토리얼: https://spring.io/guides/gs/serving-web-content/
+  - 스프링부트 메뉴얼: https://docs.spring.io/spring-boot/docs/2.3.1.RELEASE/reference/
+html/spring-boot-features.html#boot-features-spring-mvc-template-engines
+
+- thymeleaf 템플릿엔진 동작 환경  
+  ![image](https://github.com/lpromotion/Inflearn_Spring/assets/88132500/17b01e30-ea88-4d8d-8581-fb3c75e50097)
+  - 컨트롤러에서 리턴값으로 문자를 반환하면 `viewResolver`가 화면을 찾아서 처리함
+    - 스프링부트 템플릿엔진 기본 viewName 매핑
+    - `resources:templates/` + {ViewName} + `.html`
+  - `spring-boot-devtools`라이브러리를 추가하면, `html`파일을 컴파일만 해주면 서버 재시작없이 View 파일 변경이 가능함
+    - 인텔리제이 컴파일 방법 : 메뉴 build -> Recompile
+
+<br>  
+
+## 빌드하고 실행하기  
+
+콘솔로 이동
+1. ./gradlew build (윈도우 : gradlew.bat)
+2. cd build/libs (빌드할 경우 빌드 폴더가 생성됨)
+3. java -jar hello-spring-0.0.1-SNAPSHOT.jar (build/libs 에 있는 파일)
+4. 실행 확인
+
+2에서 ./gradlew clean build 하면 빌드 폴더를 삭제하고 다시 생성
+
