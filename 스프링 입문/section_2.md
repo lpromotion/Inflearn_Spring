@@ -87,7 +87,7 @@
     ```
   - `@ResponseBody` 를 사용하고, 객체를 반환하면 객체가 JSON으로 변환됨  
     <img src="https://github.com/lpromotion/Inflearn_Spring/assets/88132500/c4ad9867-01b0-4a46-919e-dc0308c805a4" width="70%">
-- @ResponseBody 사용 원리
+- @ResponseBody 사용 원리  
   <img src="https://github.com/lpromotion/Inflearn_Spring/assets/88132500/e32ea195-efda-4a2e-8b02-5d654ad7819c" width="70%">
 - `@ResponseBody` 를 사용
   - HTTP의 BODY에 문자 내용을 직접 반환
