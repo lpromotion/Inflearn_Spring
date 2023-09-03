@@ -322,18 +322,383 @@ H2 데이터베이스에 접근해서 member 테이블 생성
 <br>  
 
 ## 스프링 통합 테스트  
+스프링 컨테이너와 DB까지 연결한 통합 테스트를 진행.  
+
+- 회원 서비스 스프링 통합 테스트
+  ```java
+  package hello.hellospring.service;
+  
+  import hello.hellospring.domain.Member;
+  import hello.hellospring.repository.MemberRepository;
+  import hello.hellospring.repository.MemoryMemberRepository;
+  import org.junit.jupiter.api.AfterEach;
+  import org.junit.jupiter.api.BeforeEach;
+  import org.junit.jupiter.api.Test;
+  import org.springframework.beans.factory.annotation.Autowired;
+  import org.springframework.boot.test.context.SpringBootTest;
+  import org.springframework.transaction.annotation.Transactional;
+  
+  import static org.assertj.core.api.Assertions.assertThat;
+  import static org.junit.jupiter.api.Assertions.assertThrows;
+  
+  @SpringBootTest
+  @Transactional
+  class MemberServiceIntegrationTest {
+  
+      @Autowired MemberService memberService;
+      @Autowired MemberRepository memberRepository;
+  
+      @Test
+      void 회원가입() { // 테스트는 한글로 적을 수 있음
+          // given
+          Member member = new Member();
+          member.setName("spring");
+  
+          // when
+          Long saveId = memberService.join(member);
+  
+          // then
+          Member findMember = memberService.findOne(saveId).get();
+          assertThat(member.getName()).isEqualTo(findMember.getName());
+      }
+  
+      @Test
+      public void 중복_회원_예외() {
+          // given
+          Member member1= new Member();
+          member1.setName("spring");
+  
+          Member member2= new Member();
+          member2.setName("spring");
+  
+          // when
+          memberService.join(member1);
+          IllegalStateException e = assertThrows(IllegalStateException.class, () -> memberService.join(member2));
+  
+          assertThat(e.getMessage()).isEqualTo("이미 존재하는 회원입니다.");
+  
+      }
+  }
+  ```
+  - `@SpringBootTest` : 스프링 컨테이너와 테스트를 함께 실행함
+  - `@Transactional` : 테스트 케이스에 이 애노테이션이 있으면, 테스트 시작 전에 트랜잭션을 시작하고,
+      테스트 완료 후에 항상 롤백함. 이렇게 하면 DB 데이터가 남지 않으므로 다음 테스트에 영향을 주지 않음.  
 
 [목차](#목차)
 
 <br>  
 
 ## 스프링 JdbcTemplate  
+- 순수 Jdbc와 동일한 환경설정을 하면 됨.
+- 스트링 JdbcTemplate과 MyBatis 같은 라이브러리는 JDBC API에서 본 반복 코드를 대부분 제거해줌.
+  하지만 SQL은 직접 작성해야 함.
+<br>
+
+- 스프링 JdbcTemplate 회원 리포지토리
+  ```java
+  package hello.hellospring.repository;
+  
+  import hello.hellospring.domain.Member;
+  import org.springframework.beans.factory.annotation.Autowired;
+  import org.springframework.jdbc.core.JdbcTemplate;
+  import org.springframework.jdbc.core.RowMapper;
+  import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+  import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
+  
+  import javax.sql.DataSource;
+  import javax.xml.crypto.Data;
+  import java.sql.ResultSet;
+  import java.sql.SQLException;
+  import java.util.HashMap;
+  import java.util.List;
+  import java.util.Map;
+  import java.util.Optional;
+  
+  public class JdbcTemplateMemberRepository implements MemberRepository{
+  
+      private final JdbcTemplate jdbcTemplate;
+  
+      @Autowired // 생성자가 하나일 때는 Autowired를 생략해도 됨
+      public JdbcTemplateMemberRepository(DataSource dataSource) {
+          this.jdbcTemplate = new JdbcTemplate(dataSource);
+      }
+  
+      @Override
+      public Member save(Member member) {
+          // 자동으로 쿼리문을 만듦
+          SimpleJdbcInsert jdbcInsert = new SimpleJdbcInsert(jdbcTemplate);
+          jdbcInsert.withTableName("member").usingGeneratedKeyColumns("id");
+  
+          Map<String, Object> parameters = new HashMap<>();
+          parameters.put("name", member.getName());
+  
+          Number key = jdbcInsert.executeAndReturnKey(new
+                  MapSqlParameterSource(parameters));
+          member.setId(key.longValue());
+          return member;
+      }
+  
+      @Override
+      public Optional<Member> findById(Long id) {
+          List<Member> result = jdbcTemplate.query("select * from member where id = ?", memberRowMapper(), id);
+          return result.stream().findAny();
+      }
+  
+      @Override
+      public Optional<Member> findByName(String name) {
+          List<Member> result = jdbcTemplate.query("select * from member where name = ?", memberRowMapper(), name);
+          return result.stream().findAny();
+      }
+  
+      @Override
+      public List<Member> findAll() {
+          return jdbcTemplate.query("select * from member", memberRowMapper());
+      }
+  
+      private RowMapper<Member> memberRowMapper() {
+          return (rs, rowNum) -> {
+              Member member = new Member();
+              member.setId(rs.getLong("id"));
+              member.setName(rs.getString("name"));
+              return member;
+          };
+      }
+  }
+  ```
+<br>  
+
+- JdbcTemplate을 사용하도록 스프링 설정 변경
+  ```java
+  package hello.hellospring;
+  
+  import hello.hellospring.repository.JdbcMemberRepository;
+  import hello.hellospring.repository.JdbcTemplateMemberRepository;
+  import hello.hellospring.repository.MemberRepository;
+  import hello.hellospring.repository.MemoryMemberRepository;
+  import hello.hellospring.service.MemberService;
+  import org.springframework.beans.factory.annotation.Autowired;
+  import org.springframework.context.annotation.Bean;
+  import org.springframework.context.annotation.Configuration;
+  
+  import javax.sql.DataSource;
+  
+  @Configuration
+  public class SpringConfig {
+  
+      private DataSource dataSource;
+  
+      @Autowired
+      public SpringConfig(DataSource dataSource) {
+          this.dataSource = dataSource;
+      }
+  
+      @Bean
+      public MemberService memberService() {
+          return new MemberService(memberRepository());
+      }
+  
+      @Bean
+      public MemberRepository memberRepository() {
+  //        return new MemoryMemberRepository();
+  //        return new JdbcMemberRepository(dataSource);
+          return new JdbcTemplateMemberRepository(dataSource);
+      }
+  }
+  ```
 
 [목차](#목차)
 
 <br>  
 
 ## JPA  
+- JPA는 기존의 반복 코드는 물론이고, 기본적인 SQL도 JPA가 직접 만들어서 실행해줌
+- JPA를 사용하면, SQL과 데이터 중심의 설계에서 객체 중심의 설계로 패러다임을 전환할 수 있음
+- JPA를 사용하면 개발 생산성을 크게 높일 수 있음
+<br>
+
+- build.gradle 파일에 JPA, h2 데이터베이스 관련 라이브러리 추가
+  ```java
+  dependencies {
+  	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+  	implementation 'org.springframework.boot:spring-boot-starter-web'
+  	testImplementation('org.springframework.boot:spring-boot-starter-test') {
+  		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+  	}
+  
+  //	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+  	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+  	runtimeOnly 'com.h2database:h2'
+  }
+  ```
+  `spring-boot-starter-data-jpa`는 내부에 jdbc 관련 라이브러리를 포함함.
+  따라서 jdbc는 제거해도 됨.
+<br>
+
+- 스프링 부트에 JPA 설정 추가  
+  `resources/application.properties`
+  ```java
+  spring.datasource.url=jdbc:h2:tcp://localhost/~/test
+  spring.datasource.driver-class-name=org.h2.Driver
+  spring.datasource.username=sa
+  
+  spring.jpa.show-sql=true
+  spring.jpa.hibernate.ddl-auto=none
+  ```
+  - `show-sql` : JPA가 생성하는 SQL을 출력함
+  - `ddl-auto` : JPA는 테이블을 자동으로 생성하는 기능을 제공하는데 `none`을 사용하면 해당 기능을 끔
+    - `create`를 사용하면 엔티티 정보를 바탕으로 테이블도 직접 생성해줌.
+<br>  
+
+- JPA 엔티티 매핑
+  ```java
+  package hello.hellospring.domain;
+  
+  import jakarta.persistence.*;
+  
+  /**
+   * 회원 객체
+   **/
+  @Entity // jpa가 관리하는 entity가 됨
+  public class Member {
+  
+      @Id /* PK */ @GeneratedValue(strategy = GenerationType.IDENTITY)
+      private Long id; // 식별자 (임의의 값)
+  
+  //    @Column(name = "username")
+      private String name; // 이름
+  
+      public Long getId() {
+          return id;
+      }
+  
+      public void setId(Long id) {
+          this.id = id;
+      }
+  
+      public String getName() {
+          return name;
+      }
+  
+      public void setName(String name) {
+          this.name = name;
+      }
+  }
+  ```
+<br>  
+
+- JPA 회원 리포지토리
+  ```java
+  package hello.hellospring.repository;
+  
+  import hello.hellospring.domain.Member;
+  import jakarta.persistence.EntityManager;
+  
+  import java.util.List;
+  import java.util.Optional;
+  
+  public class JpaMemberRepository implements MemberRepository{
+  
+      private final EntityManager em; // JPA를 쓰려면 EntityManager를 주입받아야 함
+  
+      public JpaMemberRepository(EntityManager em) {
+          this.em = em;
+      }
+  
+      @Override
+      public Member save(Member member) {
+          em.persist(member);
+          return member;
+      }
+  
+      @Override
+      public Optional<Member> findById(Long id) {
+          Member member = em.find(Member.class, id);
+          return Optional.ofNullable(member);
+      }
+  
+      @Override
+      public Optional<Member> findByName(String name) {
+          List<Member> result = em.createQuery("select m from Member m where m.name = :name", Member.class)
+                  .setParameter("name", name)
+                  .getResultList();
+  
+          return result.stream().findAny();
+      }
+  
+      @Override
+      public List<Member> findAll() {
+          // jpq문. Member 엔티티 객체 자체를 select 함
+          List<Member> result = em.createQuery("select m from Member m", Member.class)
+                  .getResultList();
+          return result;
+      }
+  }
+  ```
+<br>  
+
+- 서비스 계층에 트랜잭션 추가
+  ```java
+  package hello.hellospring.service;
+
+  import org.springframework.transaction.annotation.Transactional;
+  
+  @Transactional
+  public class MemberService {}
+  ```
+  - `org.springframework.transaction.annotation.Transactional`을 사용.
+  - 스프링은 해당 클래스의 메서드를 실행할 때 트랜잭션을 시작하고, 메서드가 정상 종료되면 트랜잭션을 커밋함.
+    만약 런타임 예외가 발생하면 롤백함.
+  - JPA를 통한 모든 데이터 변경을 트랜잭션 안에서 실행해야 함.
+ 
+<br>  
+
+- JPA를 사용하도록 스프링 설정 변경
+  ```java
+  package hello.hellospring;
+  
+  import hello.hellospring.repository.*;
+  import hello.hellospring.service.MemberService;
+  import jakarta.persistence.EntityManager;
+  import org.springframework.beans.factory.annotation.Autowired;
+  import org.springframework.context.annotation.Bean;
+  import org.springframework.context.annotation.Configuration;
+  
+  import javax.sql.DataSource;
+  
+  @Configuration
+  public class SpringConfig {
+  
+      private final DataSource dataSource;
+      private final EntityManager em;
+  
+      public SpringConfig(DataSource dataSource, EntityManager em) {
+          this.dataSource = dataSource;
+          this.em = em;
+      }
+  
+      @Bean
+      public MemberService memberService() {
+          return new MemberService(memberRepository());
+      }
+  
+      @Bean
+      public MemberRepository memberRepository() {
+  //        return new MemoryMemberRepository();
+  //        return new JdbcMemberRepository(dataSource);
+  //        return new JdbcTemplateMemberRepository(dataSource);
+          return new JpaMemberRepository(em);
+      }
+  }
+  ```
+<br>  
+
+- 회원가입 테스트  
+  <img src="https://github.com/lpromotion/Inflearn_Spring/assets/88132500/e8a9caa6-3978-4736-a68a-6b03e97ef524.png" width="60%">
+<br>
+
+> 참고: JPA도 스프링 만큼 성숙한 기술이고, 학습해야 할 분량도 방대함. 다음 강의와 책을 참고.
+> - 인프런 강의 링크: 인프런 - 자바 ORM 표준 JPA 프로그래밍 - 기본편
+> - JPA 책 링크: 자바 ORM 표준 JPA 프로그래밍 - YES24
 
 [목차](#목차)
 
