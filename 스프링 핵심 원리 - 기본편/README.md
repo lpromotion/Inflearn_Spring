@@ -66,3 +66,10 @@
 - 조회한 빈이 모두 필요할 때, List, Map
 - 자동, 수동의 올바른 실무 운영 기준
 <br>
+
+### 섹션8. 빈 생명주기 콜백  
+- 빈 생명주기 콜백 시작
+- 인터페이스 InitializingBean, DisposableBean
+- 빈 등록 초기화, 소멸 메서드 지정
+- 애노테이션 @PostConstruct, @PreDestroy
+<br>
